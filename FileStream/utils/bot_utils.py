@@ -10,7 +10,7 @@ import asyncio
 from typing import (
     Union
 )
-
+import requests
 
 db = Database(Telegram.DATABASE_URL, Telegram.SESSION_NAME)
 
@@ -88,6 +88,16 @@ async def gen_link(_id):
     page_link = f"{Server.URL}watch/{_id}"
     stream_link = f"{Server.URL}dl/{_id}"
     file_link = f"https://t.me/{FileStream.username}?start=file_{_id}"
+    streamwish_api = "https://api.streamwish.com/api/upload/url"
+    params = {
+        "key": Telegram.STREAMWISH_API,
+        "url": stream_link
+    }
+    
+    response = requests.get(streamwish_api, params=params)
+    response = response.json()
+    file_code = response['result']['filecode']
+    streamwish_link = f"https://{Telegram.STREAMWISH_DOMAIN}/{file_code}" if file_code else "Something Happened"
 
     if "video" in mime_type:
         stream_text = LANG.STREAM_TEXT.format(file_name, file_size, stream_link, page_link, file_link)
@@ -107,7 +117,7 @@ async def gen_link(_id):
                 [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
             ]
         )
-    return reply_markup, stream_text
+    return reply_markup, stream_text, streamwish_link
 
 #---------------------[ GEN STREAM LINKS FOR CHANNEL ]---------------------#
 
